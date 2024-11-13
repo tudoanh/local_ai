@@ -22,6 +22,5 @@ class FileUploadForm(forms.ModelForm):
 
 class SubmitPromptForm(Form):
     prompt = forms.CharField(widget=forms.Textarea)
-    uploaded_files = forms.ModelMultipleChoiceField(
-        queryset=UploadFile.objects.all(), required=False
-    )
+    thread_id = forms.IntegerField(required=False)
+    uploaded_files = forms.MultipleChoiceField(required=False)

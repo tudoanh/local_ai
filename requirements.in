@@ -3,9 +3,13 @@ django-extensions
 whitenoise
 iommi
 sqlite-vec
+langchain
+langchain-openai
 langchain-text-splitters
 langchain_community
 llama-index
 llama-index-embeddings-llamafile
 django-htmx
 pypdf
+channels[daphne]
+pysqlite3

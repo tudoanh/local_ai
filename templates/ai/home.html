@@ -34,8 +34,8 @@
     </div>
 
     <!-- Main Chat Area -->
-    <div class="column main-content">
-      <div class="chat-container">
+    <div class="column main-content" hx-ext="ws" ws-connect="/ws/chat/">
+      <div class="chat-container" id="message-list">
         <div class="chat-messages">
           <div class="message user-message">
             <div class="message-header">
@@ -74,18 +74,22 @@
             </div>
           </div>
         </div>
-        <div class="chat-input-container p-4" style="margin-bottom: 20px">
+        <form class="chat-input-container p-4" style="margin-bottom: 20px" ws-send>
           <div class="field mb-2">
             <div class="control">
               <textarea
                 class="textarea"
+                name="message"
                 placeholder="Type your message..."
                 rows="3"
+                id="chat-message-input"
               ></textarea>
             </div>
           </div>
-          <button class="button is-primary is-fullwidth">Send</button>
-        </div>
+          <input type="hidden" name="conversation_id" value="">
+          <input type="hidden" name="uploaded_files" value="">
+          <button type="submit" class="button is-primary is-fullwidth">Send</button>
+        </form>
       </div>
     </div>
 
@@ -114,4 +118,17 @@
     chatContainer.scrollTop = chatContainer.scrollHeight;
   });
 </script>
+
+<script>
+  // clear message input after sending our new message
+  document.body.addEventListener('htmx:wsAfterSend', function(evt) {
+    document.getElementById("chat-message-input").value = "";
+  });
+  // scroll to bottom of chat after every incoming message
+  document.body.addEventListener('htmx:wsAfterMessage', function(evt) {
+    const chatUI = document.getElementById('message-list');
+    chatUI.scrollTop = chatUI.scrollHeight;
+  });
+</script>
+
 {% endblock %}

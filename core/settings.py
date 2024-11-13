@@ -12,8 +12,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import os
 from pathlib import Path
-import ell
-import sqlite3
 import sqlite_vec
 import sys
 import pysqlite3
@@ -38,6 +36,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
+    "daphne",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -147,11 +146,6 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "your_api_key")
 # Replace sqlite3 import with pysqlite3
 sys.modules["sqlite3"] = pysqlite3
 
-if not Path("./logdir").exists():
-    Path("./logdir").mkdir()
-    ell.init(store="./logdir", autocommit=True)
-
-
 def init_sqlite_vec():
     conn = pysqlite3.connect(str(BASE_DIR / "db" / "db.sqlite3"))
     conn.enable_load_extension(True)
@@ -165,3 +159,8 @@ init_sqlite_vec()
 
 EMBEDDING_SIZE = 1024
 EMBEDDING_SERVICE_URL = "http://localhost:8888"
+OPENAI_BASE_URL = "http://localhost:8080"
+OPENAI_API_KEY = "sk-proj-1234567890"
+OPENAI_MODEL = "gpt-4o-mini"
+
+ASGI_APPLICATION = "core.asgi.application"
