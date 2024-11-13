@@ -1,3 +1,4 @@
+import os
 import struct
 from typing import List
 from django.db import models
@@ -18,6 +19,9 @@ def deserialize_f32(binary_data: bytes) -> List[float]:
 class UploadFile(TimeStampedModel):
     file = models.FileField(upload_to="uploads/")
     processed = models.BooleanField(default=False)
+
+    def filename(self):
+        return os.path.basename(self.file.name)
 
     def __str__(self):
         return f"UploadFile {self.id} - {self.file.name}"

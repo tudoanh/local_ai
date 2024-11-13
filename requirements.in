@@ -4,5 +4,8 @@ whitenoise
 iommi
 sqlite-vec
 langchain-text-splitters
+langchain_community
 llama-index
 llama-index-embeddings-llamafile
+django-htmx
+pypdf

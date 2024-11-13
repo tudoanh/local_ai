@@ -267,3 +267,5 @@ pyrightconfig.json
 
 .idea/
 logdir/
+*.pdf
+uploads/

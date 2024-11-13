@@ -3,7 +3,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from llama_index.embeddings.llamafile import LlamafileEmbedding
 from django.db import transaction
 from django.conf import settings
-
+from langchain_community.document_loaders import PyPDFLoader
 from rag.models import Knowledge, KnowledgeEmbedding, UploadFile
 
 embedding = LlamafileEmbedding(
@@ -37,9 +37,16 @@ def process_file(file_instance):
             "",
         ],
     )
-    with file_instance.file.open() as f:
-        content = f.read().decode("utf-8")
-    texts = splitter.create_documents([content])
+    if file_instance.file.name.endswith('.pdf'):
+        loader = PyPDFLoader(file_instance.file.path)
+        pages = []
+        for page in loader.load():
+            pages.append(page)
+        texts = splitter.split_documents(pages)
+    elif file_instance.file.name.endswith('.txt'):
+        with file_instance.file.open() as f:
+            content = f.read()
+            texts = splitter.create_documents([content])
 
     embeddings = create_embedding([text.page_content for text in texts])
 
@@ -60,8 +67,6 @@ def create_knowledge(file_instance, content, metadata, embedding):
 
     serialized_embedding = KnowledgeEmbedding.serialize_f32(embedding)
     print(content)
-    print(len(embedding))
-    print(serialized_embedding)
 
     with transaction.atomic():
         knowledge = Knowledge.objects.create(

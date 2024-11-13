@@ -1,0 +1,117 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="columns is-gapless">
+    <!-- Left Sidebar -->
+    <div class="column is-2 sidebar">
+      <div class="p-4">
+        <div class="file is-primary mb-4">
+          <form action="{% url 'ai:file_upload' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label class="file-label">
+              <input class="file-input" type="file" name="files" multiple />
+              <span class="file-cta">
+                <span class="file-icon">
+                  <i class="fas fa-upload"></i>
+                </span>
+                <span class="file-label">Choose Files</span>
+              </span>
+            </label>
+            <button type="submit" class="button is-primary mt-2">Upload</button>
+          </form>
+
+        </div>
+        <div class="file-list">
+          {% for file in uploaded_files %}
+          <div class="file-item">
+            <label class="checkbox mr-2">
+              <input type="checkbox" />
+            </label>
+            <span>{{file.filename }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="column main-content">
+      <div class="chat-container">
+        <div class="chat-messages">
+          <div class="message user-message">
+            <div class="message-header">
+              <p>You</p>
+            </div>
+            <div class="message-content">
+              Hello! Can you help me analyze these documents?
+            </div>
+          </div>
+
+          <div class="message ai-message">
+            <div class="message-header">
+              <p>AI Assistant</p>
+            </div>
+            <div class="message-content">
+              Of course! I'll help you analyze the documents you've uploaded.
+              What would you like to know about them?
+            </div>
+          </div>
+
+          <div class="message user-message">
+            <div class="message-header">
+              <p>You</p>
+            </div>
+            <div class="message-content">
+              Can you summarize the main points from document1.txt?
+            </div>
+          </div>
+
+          <div class="message ai-message">
+            <div class="message-header">
+              <p>AI Assistant</p>
+            </div>
+            <div class="message-content">
+              Based on document1.txt, here are the key points...
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-container p-4" style="margin-bottom: 20px">
+          <div class="field mb-2">
+            <div class="control">
+              <textarea
+                class="textarea"
+                placeholder="Type your message..."
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+          <button class="button is-primary is-fullwidth">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="column is-3 sidebar">
+      <div class="p-4">
+        <h3 class="title is-5">Related Information</h3>
+        <div class="related-info">
+          <div class="related-item">
+            <p class="has-text-weight-bold">document1.txt</p>
+            <p>Key information found in paragraph 2 about the main topic...</p>
+          </div>
+          <div class="related-item">
+            <p class="has-text-weight-bold">document2.pdf</p>
+            <p>Supporting details from section 3 regarding the discussion...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const chatContainer = document.querySelector(".chat-container");
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  });
+</script>
+{% endblock %}
