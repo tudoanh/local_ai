@@ -1,9 +1,8 @@
 import struct
 from typing import List
 from django.db import models
+from django.conf import settings
 from django_extensions.db.models import TimeStampedModel
-from django.core.exceptions import ValidationError
-import json
 
 
 def serialize_f32(vector: List[float]) -> bytes:
@@ -25,7 +24,7 @@ class UploadFile(TimeStampedModel):
 
 
 class Knowledge(TimeStampedModel):
-    file = models.ForeignKey(UploadFile, on_delete=models.CASCADE)
+    file = models.ForeignKey(UploadFile, on_delete=models.CASCADE, null=True)
     content = models.TextField()
     metadata = models.JSONField()
 
@@ -44,7 +43,8 @@ class KnowledgeEmbedding(models.Model):
     """
 
     knowledge = models.OneToOneField(
-        Knowledge, on_delete=models.CASCADE, primary_key=True
+        Knowledge, on_delete=models.CASCADE, primary_key=True,
+        db_column='rowid', related_name='embedding'
     )
     embedding = models.BinaryField()
 
@@ -54,8 +54,8 @@ class KnowledgeEmbedding(models.Model):
 
     @classmethod
     def serialize_f32(cls, vector: List[float]) -> bytes:
-        if len(vector) != 512:
-            raise ValueError("Embedding must be a list of 512 floats.")
+        if len(vector) != settings.EMBEDDING_SIZE:
+            raise ValueError(f"Embedding must be a list of {settings.EMBEDDING_SIZE} floats.")
         return serialize_f32(vector)
 
     @classmethod
@@ -101,7 +101,7 @@ class KnowledgeEmbedding(models.Model):
 
     def save_with_embedding(self, embedding: List[float], *args, **kwargs):
         """Save the embedding alongside the Knowledge instance"""
-        if len(embedding) != 512:
-            raise ValueError("Embedding must be a list of 512 floats.")
+        if len(embedding) != settings.EMBEDDING_SIZE:
+            raise ValueError(f"Embedding must be a list of {settings.EMBEDDING_SIZE} floats.")
         self.embedding = self.serialize_f32(embedding)
         # No need to call super().save() here since it's managed by the virtual table

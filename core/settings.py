@@ -70,7 +70,7 @@ ROOT_URLCONF = "core.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -159,3 +159,6 @@ def init_sqlite_vec():
 
 # Call the initialization function
 init_sqlite_vec()
+
+EMBEDDING_SIZE = 1024
+EMBEDDING_SERVICE_URL = "http://localhost:8888"

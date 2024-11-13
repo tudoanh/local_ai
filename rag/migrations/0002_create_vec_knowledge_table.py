@@ -13,35 +13,10 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql="""
             CREATE VIRTUAL TABLE vec_knowledge USING vec0(
-                embedding FLOAT[512]
+                embedding FLOAT[1024]
             );
             """,
             reverse_sql="DROP TABLE IF EXISTS vec_knowledge;",
-        ),
-        # Optional: Create triggers to synchronize rowid with Knowledge.id
-        # Ensure that each row in vec_knowledge corresponds to a row in knowledge
-        migrations.RunSQL(
-            sql="""
-            CREATE TRIGGER vec_knowledge_insert AFTER INSERT ON knowledge
-            BEGIN
-                INSERT INTO vec_knowledge(rowid, embedding)
-                VALUES (new.id, x'');  -- Initialize with empty embedding
-            END;
-            """,
-            reverse_sql="""
-            DROP TRIGGER IF EXISTS vec_knowledge_insert;
-            """,
-        ),
-        migrations.RunSQL(
-            sql="""
-            CREATE TRIGGER vec_knowledge_delete AFTER DELETE ON knowledge
-            BEGIN
-                DELETE FROM vec_knowledge WHERE rowid = old.id;
-            END;
-            """,
-            reverse_sql="""
-            DROP TRIGGER IF EXISTS vec_knowledge_delete;
-            """,
         ),
     ]
 
