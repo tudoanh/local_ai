@@ -1,5 +1,9 @@
 # Local AI
 
+Screenshot
+
+![https://i.imgur.com/6SxGEAI.png](https://i.imgur.com/6SxGEAI.png)
+
 ### Goals
 
 1. Local first
