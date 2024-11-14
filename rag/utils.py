@@ -15,6 +15,10 @@ def create_embedding(texts: List[str]):
     return embedding.get_text_embedding_batch(texts)
 
 
+def get_query_embedding(text: str):
+    return embedding.get_query_embedding(text)
+
+
 def process_file(file_instance):
     """
     Processes the file and creates Knowledge instances.
@@ -50,10 +54,9 @@ def process_file(file_instance):
 
     embeddings = create_embedding([text.page_content for text in texts])
 
-    count = 0
+
     for ct, em in zip(texts, embeddings):
-        count += 1
-        create_knowledge(file_instance, ct.page_content, {"page_number": count}, em)
+        create_knowledge(file_instance, ct.page_content, {"file_name": file_instance.file.name}, em)
     file_instance.processed = True
     file_instance.save()
 
@@ -101,8 +104,10 @@ def update_embedding(knowledge, new_embedding):
             embedding_instance.save()
 
 
-def search_similar_knowledge(query_embedding, limit=3):
+def search_similar_knowledge(query_embedding, file_ids=[], limit=3):
     """
     Searches for similar Knowledge entries based on the query_embedding.
     """
+    if file_ids:
+        return KnowledgeEmbedding.search_similar(query_embedding, file_ids, limit=limit)
     return KnowledgeEmbedding.search_similar(query_embedding, limit=limit)

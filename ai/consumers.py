@@ -5,9 +5,11 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from channels.generic.websocket import WebsocketConsumer
 from openai import OpenAI
+from rag.utils import create_embedding, search_similar_knowledge, get_query_embedding
+from ai.models import Thread, Message
 
 from langchain_community.llms.llamafile import Llamafile
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 
 def _format_token(token: str) -> str:
@@ -18,7 +20,9 @@ def _format_token(token: str) -> str:
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
-        self.messages = []
+        self.messages = [
+            SystemMessage(content="You are a knowledgeable, efficient, and direct AI assistant. Provide concise answers, focusing on the key information needed. Offer suggestions tactfully when appropriate to improve outcomes. Engage in productive collaboration with the user.")
+        ]
         self.accept()
 
     def disconnect(self, close_code):
@@ -27,11 +31,41 @@ class ChatConsumer(WebsocketConsumer):
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message_text = text_data_json["message"]
+        thread_id = text_data_json.get("thread_id")
+        uploaded_files = text_data_json.get("uploaded_files")
         print(message_text)
+        print(thread_id)
+        print(uploaded_files)
 
         # do nothing with empty messages
         if not message_text.strip():
             return
+        
+        if not thread_id:
+            thread = Thread.objects.create(title=message_text[:50].strip().replace("\n", " ").capitalize())
+            thread_id = thread.id
+            user_msg = Message.objects.create(thread=thread, text=message_text, role=Message.Role.USER)
+        else:
+            thread = Thread.objects.get(id=thread_id)
+            last_msg = thread.message_set.order_by("-created").first()
+            user_msg = Message.objects.create(thread=thread, text=message_text, role=Message.Role.USER, previous_message=last_msg)
+        
+        if uploaded_files:
+            file_ids = uploaded_files.split(",")
+            query = get_query_embedding(message_text)
+            similars = search_similar_knowledge(query, file_ids, limit=20)
+            similar_docs_html = render_to_string(
+                "ai/websocket_components/similar_documents.html",
+                {
+                    "similar_docs": similars
+                }
+            )
+            self.send(text_data=f'<div id="related-documents" hx-swap-oob="innerHTML">{similar_docs_html}</div>')
+
+            print(f"Similar knowledge entries: {similars}")
+            self.messages.append(
+                AIMessage(content=f"Similar knowledge entries: {similars}. Please return response based on this.")
+            )
 
         # add to messages
         self.messages.append(
@@ -79,6 +113,7 @@ class ChatConsumer(WebsocketConsumer):
             },
         )
         # add to messages
+        ai_msg = Message.objects.create(thread=thread, text=system_message, role=Message.Role.AI, previous_message=user_msg)
         self.messages.append(
             AIMessage(content=system_message)
         )

@@ -67,11 +67,19 @@ class KnowledgeEmbedding(models.Model):
         return deserialize_f32(binary_data)
 
     @classmethod
-    def search_similar(cls, query_embedding: List[float], limit: int = 3):
+    def search_similar(cls, query_embedding: List[float], file_ids: List[int] = None, limit: int = 3):
         """Search for similar knowledge entries using vector similarity"""
         from django.db import connection
 
         serialized_embedding = cls.serialize_f32(query_embedding)
+        params = [serialized_embedding]
+        
+        file_filter = ""
+        if file_ids:
+            file_filter = "AND knowledge.file_id IN ({})".format(','.join('?' * len(file_ids)))
+            params.extend(file_ids)
+        
+        params.append(limit)
 
         with connection.cursor() as cursor:
             cursor.execute(
@@ -82,13 +90,14 @@ class KnowledgeEmbedding(models.Model):
                     knowledge.file_id,
                     knowledge.content,
                     knowledge.metadata,
-                    vec_cosine_similarity(vec_knowledge.embedding, ?) AS similarity
+                    vec_distance_L2(vec_knowledge.embedding, ?) AS similarity
                 FROM vec_knowledge
                 JOIN knowledge ON knowledge.id = vec_knowledge.rowid
-                ORDER BY similarity DESC
+                WHERE 1=1 {}
+                ORDER BY similarity ASC
                 LIMIT ?
-                """,
-                [serialized_embedding, limit],
+                """.format(file_filter),
+                params,
             )
 
             return [

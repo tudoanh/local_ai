@@ -13,3 +13,4 @@ django-htmx
 pypdf
 channels[daphne]
 pysqlite3
+#paddlepaddle==3.0.0b1

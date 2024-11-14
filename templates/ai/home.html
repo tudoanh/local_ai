@@ -1,32 +1,76 @@
 {% extends "base.html" %} {% block content %}
-<div class="container">
+<div class="" x-data="fileSelection()">
   <div class="columns is-gapless">
     <!-- Left Sidebar -->
     <div class="column is-2 sidebar">
       <div class="p-4">
-        <div class="file is-primary mb-4">
-          <form action="{% url 'ai:file_upload' %}" method="post" enctype="multipart/form-data">
+        <div
+          class="file is-primary mb-4"
+          x-data="{ 
+          files: [],
+          isUploading: false,
+          getFileNames() {
+              return Array.from(this.files).map(file => file.name).join(', ')
+          }
+      }"
+        >
+          <form
+            action="{% url 'ai:file_upload' %}"
+            method="post"
+            enctype="multipart/form-data"
+            x-on:submit="isUploading = true"
+          >
             {% csrf_token %}
             <label class="file-label">
-              <input class="file-input" type="file" name="files" multiple />
+              <input
+                class="file-input"
+                type="file"
+                name="files"
+                multiple
+                x-on:change="files = $event.target.files"
+              />
               <span class="file-cta">
                 <span class="file-icon">
                   <i class="fas fa-upload"></i>
                 </span>
-                <span class="file-label">Choose Files</span>
+                <span
+                  class="file-label"
+                  x-text="files.length ? getFileNames() : 'Choose Files'"
+                >
+                  Choose Files
+                </span>
               </span>
             </label>
-            <button type="submit" class="button is-primary mt-2">Upload</button>
+            <button
+              type="submit"
+              class="button is-primary mt-2"
+              x-bind:class="{ 'is-loading': isUploading }"
+              x-bind:disabled="isUploading || files.length === 0"
+            >
+              Upload
+            </button>
           </form>
-
         </div>
+        <!-- Update file list section -->
         <div class="file-list">
           {% for file in uploaded_files %}
-          <div class="file-item">
+          <div class="file-item" id="file-{{file.id}}">
             <label class="checkbox mr-2">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                x-on:change="toggleFile('{{file.id}}')"
+                x-bind:checked="selectedFiles.includes('{{file.id}}')"
+              />
             </label>
-            <span>{{file.filename }}</span>
+            <span>{{file.filename}}</span>
+            <button
+              class="button is-small is-danger is-light"
+              hx-delete="{% url 'ai:delete_file' file.id %}"
+            >
+              <span class="icon is-small">
+                <i class="fas fa-trash"></i>
+              </span>
+            </button>
           </div>
           {% endfor %}
         </div>
@@ -35,20 +79,29 @@
 
     <!-- Main Chat Area -->
     <div class="column main-content">
-      <div class="chat-container" hx-ext="ws" ws-connect="/ws/chat/" hx-swap-oob="true">
+      <div
+        class="chat-container"
+        hx-ext="ws"
+        ws-connect="/ws/chat/"
+        hx-swap-oob="true"
+      >
         <div class="chat-wrapper">
           <div class="chat-messages" id="message-list">
             <div class="message ai-message">
               <div class="message-header">
                 <p>AI</p>
               </div>
-              <div class="message-content">
+              <div class="message-content content">
                 Hello! How can I help you today?
               </div>
             </div>
           </div>
         </div>
-        <form class="chat-input-container p-4" style="margin-bottom: 20px" ws-send>
+        <form
+          class="chat-input-container p-4"
+          style="margin-bottom: 20px"
+          ws-send
+        >
           <div class="field mb-2">
             <div class="control">
               <textarea
@@ -60,9 +113,15 @@
               ></textarea>
             </div>
           </div>
-          <input type="hidden" name="conversation_id" value="">
-          <input type="hidden" name="uploaded_files" value="">
-          <button type="submit" class="button is-primary is-fullwidth">Send</button>
+          <input type="hidden" name="thread_id" value="" />
+          <input
+            type="hidden"
+            name="uploaded_files"
+            x-bind:value="selectedFiles.join(',')"
+          />
+          <button type="submit" class="button is-primary is-fullwidth">
+            Send
+          </button>
         </form>
       </div>
     </div>
@@ -71,15 +130,8 @@
     <div class="column is-3 sidebar">
       <div class="p-4">
         <h3 class="title is-5">Related Information</h3>
-        <div class="related-info">
-          <div class="related-item">
-            <p class="has-text-weight-bold">document1.txt</p>
-            <p>Key information found in paragraph 2 about the main topic...</p>
-          </div>
-          <div class="related-item">
-            <p class="has-text-weight-bold">document2.pdf</p>
-            <p>Supporting details from section 3 regarding the discussion...</p>
-          </div>
+        <div class="related-info" id="related-documents">
+          <!-- Similar documents will be rendered here -->
         </div>
       </div>
     </div>
@@ -87,22 +139,29 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const chatContainer = document.querySelector(".chat-container");
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-  });
-</script>
-
-<script>
   // clear message input after sending our new message
-  document.body.addEventListener('htmx:wsAfterSend', function(evt) {
+  document.body.addEventListener("htmx:wsAfterSend", function (evt) {
     document.getElementById("chat-message-input").value = "";
   });
   // scroll to bottom of chat after every incoming message
-  document.body.addEventListener('htmx:wsAfterMessage', function(evt) {
-    const chatUI = document.getElementById('message-list');
+  document.body.addEventListener("htmx:wsAfterMessage", function (evt) {
+    const chatUI = document.getElementById("message-list");
     chatUI.scrollTop = chatUI.scrollHeight;
   });
+
+  // Add to x-data function
+  function fileSelection() {
+    return {
+      selectedFiles: [],
+      toggleFile(fileId) {
+        if (this.selectedFiles.includes(fileId)) {
+          this.selectedFiles = this.selectedFiles.filter((id) => id !== fileId);
+        } else {
+          this.selectedFiles.push(fileId);
+        }
+      },
+    };
+  }
 </script>
 
 {% endblock %}
