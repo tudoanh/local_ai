@@ -68,37 +68,46 @@ class KnowledgeEmbedding(models.Model):
 
     @classmethod
     def search_similar(cls, query_embedding: List[float], file_ids: List[int] = None, limit: int = 3):
-        """Search for similar knowledge entries using vector similarity"""
         from django.db import connection
+        from string import Template
 
+        # Serialize the embedding
         serialized_embedding = cls.serialize_f32(query_embedding)
-        params = [serialized_embedding]
         
+        # Initialize parameters dictionary
+        params = {
+            'embedding': serialized_embedding,
+            'limit': limit
+        }
+
+        # Build file_id placeholders and update params
         file_filter = ""
         if file_ids:
-            file_filter = "AND knowledge.file_id IN ({})".format(','.join('?' * len(file_ids)))
-            params.extend(file_ids)
-        
-        params.append(limit)
+            placeholders = ', '.join([f":file_id_{i}" for i in range(len(file_ids))])
+            file_filter = f"AND knowledge.file_id IN ({placeholders})"
+            for i, file_id in enumerate(file_ids):
+                params[f'file_id_{i}'] = file_id
+
+        # Construct the SQL query with named placeholders
+        sql = f"""
+            SELECT
+                vec_knowledge.rowid,
+                knowledge.id,
+                knowledge.file_id,
+                knowledge.content,
+                knowledge.metadata,
+                vec_distance_L2(vec_knowledge.embedding, :embedding) AS similarity
+            FROM vec_knowledge
+            JOIN knowledge ON knowledge.id = vec_knowledge.rowid
+            WHERE 1=1 {file_filter}
+            ORDER BY similarity ASC
+            LIMIT :limit
+        """
+        print("SQL Query:", sql)
+        print("Parameters:", params)
 
         with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT
-                    vec_knowledge.rowid,
-                    knowledge.id,
-                    knowledge.file_id,
-                    knowledge.content,
-                    knowledge.metadata,
-                    vec_distance_L2(vec_knowledge.embedding, ?) AS similarity
-                FROM vec_knowledge
-                JOIN knowledge ON knowledge.id = vec_knowledge.rowid
-                WHERE 1=1 {}
-                ORDER BY similarity ASC
-                LIMIT ?
-                """.format(file_filter),
-                params,
-            )
+            cursor.execute(sql, params)
 
             return [
                 {
