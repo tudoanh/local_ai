@@ -1,4 +1,5 @@
 import os
+import json
 import struct
 from typing import List
 from django.db import models
@@ -103,8 +104,6 @@ class KnowledgeEmbedding(models.Model):
             ORDER BY similarity ASC
             LIMIT :limit
         """
-        print("SQL Query:", sql)
-        print("Parameters:", params)
 
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
@@ -114,8 +113,8 @@ class KnowledgeEmbedding(models.Model):
                     "rowid": row[0],
                     "knowledge_id": row[1],
                     "file_id": row[2],
-                    "content": row[3],
-                    "metadata": row[4],
+                    "text": row[3],
+                    "metadata": json.loads(row[4]),
                     "similarity": row[5],
                 }
                 for row in cursor.fetchall()

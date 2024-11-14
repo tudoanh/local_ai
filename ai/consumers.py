@@ -10,6 +10,10 @@ from ai.models import Thread, Message
 
 from langchain_community.llms.llamafile import Llamafile
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from flashrank import Ranker, RerankRequest
+
+
+ranker = Ranker(model_name="ms-marco-MiniLM-L-12-v2", cache_dir="./flashrank_cache")
 
 
 def _format_token(token: str) -> str:
@@ -20,9 +24,7 @@ def _format_token(token: str) -> str:
 
 class ChatConsumer(WebsocketConsumer):
     def connect(self):
-        self.messages = [
-            SystemMessage(content="You are a knowledgeable, efficient, and direct AI assistant. Provide concise answers, focusing on the key information needed. Offer suggestions tactfully when appropriate to improve outcomes. Engage in productive collaboration with the user.")
-        ]
+        self.messages = []
         self.accept()
 
     def disconnect(self, close_code):
@@ -34,8 +36,6 @@ class ChatConsumer(WebsocketConsumer):
         thread_id = text_data_json.get("thread_id")
         uploaded_files = text_data_json.get("uploaded_files")
         print(message_text)
-        print(thread_id)
-        print(uploaded_files)
 
         # do nothing with empty messages
         if not message_text.strip():
@@ -49,28 +49,6 @@ class ChatConsumer(WebsocketConsumer):
             thread = Thread.objects.get(id=thread_id)
             last_msg = thread.message_set.order_by("-created").first()
             user_msg = Message.objects.create(thread=thread, text=message_text, role=Message.Role.USER, previous_message=last_msg)
-        
-        if uploaded_files:
-            file_ids = uploaded_files.split(",")
-            query = get_query_embedding(message_text)
-            similars = search_similar_knowledge(query, file_ids, limit=20)
-            similar_docs_html = render_to_string(
-                "ai/websocket_components/similar_documents.html",
-                {
-                    "similar_docs": similars
-                }
-            )
-            self.send(text_data=f'<div id="related-documents" hx-swap-oob="innerHTML">{similar_docs_html}</div>')
-
-            print(f"Similar knowledge entries: {similars}")
-            self.messages.append(
-                AIMessage(content=f"Similar knowledge entries: {similars}. Please return response based on this.")
-            )
-
-        # add to messages
-        self.messages.append(
-            HumanMessage(content="<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n"+message_text+"<|eot_id|><|start_header_id|>assistant<|end_header_id|>")
-        )
 
         # show user's message
         user_message_html = render_to_string(
@@ -91,6 +69,31 @@ class ChatConsumer(WebsocketConsumer):
             },
         )
         self.send(text_data=system_message_html)
+
+        if uploaded_files:
+            file_ids = uploaded_files.split(",")
+            query = get_query_embedding(message_text)
+            similars = search_similar_knowledge(query, file_ids, limit=100)
+            rerankrequest = RerankRequest(query=message_text, passages=similars)
+            results = ranker.rerank(rerankrequest)
+            similar_docs_html = render_to_string(
+                "ai/websocket_components/similar_documents.html",
+                {
+                    "similar_docs": results[:30]
+                }
+            )
+            self.send(text_data=f'<div id="related-documents" hx-swap-oob="innerHTML">{similar_docs_html}</div>')
+            
+            knowledge = "\n\n".join([doc["text"] for doc in results[:30]])
+
+            self.messages.append(
+                AIMessage(content=f"Similar knowledge entries: {knowledge}. Please return response based on this.")
+            )
+
+        # add to messages
+        self.messages.append(
+            HumanMessage(content="<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n"+message_text+"<|eot_id|><|start_header_id|>assistant<|end_header_id|>")
+        )
 
         llm = Llamafile(
             base_url=settings.OPENAI_BASE_URL,
@@ -114,7 +117,10 @@ class ChatConsumer(WebsocketConsumer):
         )
         # add to messages
         ai_msg = Message.objects.create(thread=thread, text=system_message, role=Message.Role.AI, previous_message=user_msg)
+        # remove the msg before last msg in self.messages
+        self.messages.pop(-2)
         self.messages.append(
             AIMessage(content=system_message)
         )
+        # remove the last message before the last msg 
         self.send(text_data=final_message_html)

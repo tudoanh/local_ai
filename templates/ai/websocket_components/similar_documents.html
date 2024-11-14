@@ -1,7 +1,6 @@
 {% for doc in similar_docs %}
 <div class="related-item">
-  <p class="has-text-weight-bold">{{ doc.metadata.file_name }}</p>
-  <p>{{ doc.content|truncatechars:150 }}</p>
+  <p>{{ doc.text|truncatechars:150 }}</p>
   <p class="has-text-grey is-size-7">
     File: {{ doc.metadata.file_name }} | Similarity: {{ doc.similarity|floatformat:2 }}
   </p>
