@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_extensions",
     "django_htmx",
-    "iommi",
     "rag",
     "ai",
 ]
@@ -60,10 +59,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
-    "iommi.live_edit.Middleware",
-    "iommi.sql_trace.Middleware",
-    "iommi.profiling.Middleware",
-    "iommi.middleware",
 ]
 
 ROOT_URLCONF = "core.urls"
