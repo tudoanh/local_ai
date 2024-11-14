@@ -1,0 +1,21 @@
+{% for message in messages %}
+  {% if message.role == 'user' %}
+    <div class="message user-message">
+      <div class="message-header">
+        <p>You</p>
+      </div>
+      <div class="message-content">
+        {{ message.text }}
+      </div>
+    </div>
+  {% elif message.role == 'ai' %}
+    <div class="message ai-message">
+      <div class="message-header">
+        <p>AI Assistant</p>
+      </div>
+      <div class="message-content">
+        {{ message.text }}
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}

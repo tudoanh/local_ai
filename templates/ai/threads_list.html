@@ -1,0 +1,16 @@
+<ul>
+  {% for thread in threads %}
+  <li>
+    <a
+      href="#"
+      hx-get="{% url 'ai:thread_detail' thread_id=thread.id %}"
+      hx-target="#chat-messages"
+      hx-swap="innerHTML"
+      class="{% if thread.id == current_thread.id %}is-active{% endif %}">
+      {{ thread.title }}
+    </a>
+  </li>
+  {% empty %}
+  <li>No threads available.</li>
+  {% endfor %}
+</ul>

@@ -103,3 +103,8 @@
 .navbar {
     border-bottom: 1px solid #ddd;
 }
+
+.is-active {
+  font-weight: bold;
+  color: #3273dc; /* Bulma primary color */
+}

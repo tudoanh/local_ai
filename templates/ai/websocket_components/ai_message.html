@@ -1,4 +1,10 @@
 {% load chat_tags %}
-<div id="{{ contents_div_id }}" class="pg-message-contents" hx-swap-oob="true">
-  {{ message|render_markdown }}
+<div class="chat-messages" id="message-list" hx-swap-oob="beforeend">
+  <div class="message ai-message">
+    <div class="message-header">
+      <p>AI Assistant</p>
+    </div>
+    <div id="{{ contents_div_id }}" class="message-content">
+    </div>
+  </div>
 </div>

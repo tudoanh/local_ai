@@ -1,4 +1,4 @@
 {% load chat_tags %}
-<div id="{{ contents_div_id }}" class="pg-message-contents" hx-swap-oob="true">
-  {{ message|render_markdown }}
+<div class="message-content" id="{{ contents_div_id }}" hx-swap-oob="true">
+  {{ message | render_markdown | safe }}
 </div>

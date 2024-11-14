@@ -35,7 +35,7 @@ class ChatConsumer(WebsocketConsumer):
 
         # add to messages
         self.messages.append(
-            HumanMessage(content=message_text)
+            HumanMessage(content="<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n"+message_text+"<|eot_id|><|start_header_id|>assistant<|end_header_id|>")
         )
 
         # show user's message
@@ -63,10 +63,10 @@ class ChatConsumer(WebsocketConsumer):
             streaming=True,
         )
         chunks = []
-        for chunk in llm.stream(self.messages):
+        for chunk in llm.stream(self.messages, stop=["<|eot_id|>"]):
             chunks.append(chunk)
             # use htmx to insert the next token at the end of our system message.
-            chunk = f'<div hx-swap-oob="beforeend:#{contents_div_id}">{_format_token(chunk)}</div>'
+            chunk = f'<div class="message-content" hx-swap-oob="beforeend:#{contents_div_id}">{_format_token(chunk)}</div>'
             self.send(text_data=chunk)
         system_message = "".join(chunks)
         print(system_message)

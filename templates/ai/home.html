@@ -34,43 +34,17 @@
     </div>
 
     <!-- Main Chat Area -->
-    <div class="column main-content" hx-ext="ws" ws-connect="/ws/chat/">
-      <div class="chat-container" id="message-list">
-        <div class="chat-messages">
-          <div class="message user-message">
-            <div class="message-header">
-              <p>You</p>
-            </div>
-            <div class="message-content">
-              Hello! Can you help me analyze these documents?
-            </div>
-          </div>
-
-          <div class="message ai-message">
-            <div class="message-header">
-              <p>AI Assistant</p>
-            </div>
-            <div class="message-content">
-              Of course! I'll help you analyze the documents you've uploaded.
-              What would you like to know about them?
-            </div>
-          </div>
-
-          <div class="message user-message">
-            <div class="message-header">
-              <p>You</p>
-            </div>
-            <div class="message-content">
-              Can you summarize the main points from document1.txt?
-            </div>
-          </div>
-
-          <div class="message ai-message">
-            <div class="message-header">
-              <p>AI Assistant</p>
-            </div>
-            <div class="message-content">
-              Based on document1.txt, here are the key points...
+    <div class="column main-content">
+      <div class="chat-container" hx-ext="ws" ws-connect="/ws/chat/" hx-swap-oob="true">
+        <div class="chat-wrapper">
+          <div class="chat-messages" id="message-list">
+            <div class="message ai-message">
+              <div class="message-header">
+                <p>AI</p>
+              </div>
+              <div class="message-content">
+                Hello! How can I help you today?
+              </div>
             </div>
           </div>
         </div>
