@@ -1,5 +1,8 @@
 {% extends "base.html" %} {% block content %}
-<div class="" x-data="fileSelection()">
+<div
+  class=""
+  x-data="{...fileSelection(), llmType: 'llamafile', modelName: ''}"
+>
   <div class="columns is-gapless">
     <!-- Left Sidebar -->
     <div class="column is-2 sidebar">
@@ -10,9 +13,9 @@
           files: [],
           isUploading: false,
           getFileNames() {
-              return Array.from(this.files).map(file => file.name).join(', ')
+            return Array.from(this.files).map(file => file.name).join(', ')
           }
-      }"
+        }"
         >
           <form
             action="{% url 'ai:file_upload' %}"
@@ -50,6 +53,31 @@
               Upload
             </button>
           </form>
+        </div>
+        <div class="field mt-4">
+          <label class="label">LLM Type</label>
+          <div class="control">
+            <div class="select is-primary">
+              <select name="llm_type" x-model="llmType">
+                <option value="llamafile">Llamafile</option>
+                <option value="gemini">Gemini</option>
+                <option value="openrouter">OpenRouter</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field mt-4">
+          <label class="label">Model Name</label>
+          <div class="control">
+            <input
+              class="input is-primary"
+              type="text"
+              name="model_name"
+              x-model="modelName"
+              placeholder="Enter model name"
+            />
+          </div>
         </div>
         <!-- Update file list section -->
         <div class="file-list">
@@ -119,6 +147,8 @@
             name="uploaded_files"
             x-bind:value="selectedFiles.join(',')"
           />
+          <input type="hidden" x-bind:value="llmType" name="llm_type" />
+          <input type="hidden" x-bind:value="modelName" name="model_name" />
           <button type="submit" class="button is-primary is-fullwidth">
             Send
           </button>
