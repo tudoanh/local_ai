@@ -1,8 +1,15 @@
+<!-- Update similar_documents.html -->
 {% for doc in similar_docs %}
-<div class="related-item">
-  <p>{{ doc.text|truncatechars:150 }}</p>
+<div class="related-item" x-data="{ expanded: false }">
+  <div
+    class="related-content"
+    :class="{ 'truncated': !expanded, 'expanded': expanded }"
+    @click="expanded = !expanded"
+  >
+    {{ doc.text }}
+  </div>
   <p class="has-text-grey is-size-7">
-    File: {{ doc.metadata.file_name }} | Similarity: {{ doc.similarity|floatformat:2 }}
+    File: {{ doc.metadata.file_name }} | Similarity: {{doc.similarity|floatformat:2 }}
   </p>
 </div>
 {% endfor %}

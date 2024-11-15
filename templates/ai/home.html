@@ -60,6 +60,7 @@
             <div class="select is-primary">
               <select name="llm_type" x-model="llmType">
                 <option value="llamafile">Llamafile</option>
+                <option value="gemma2b">Gemma 2B</option>
                 <option value="gemini">Gemini</option>
                 <option value="openrouter">OpenRouter</option>
               </select>
@@ -192,6 +193,12 @@
       },
     };
   }
+
+  document.body.addEventListener("htmx:afterSwap", function (evt) {
+    if (evt.target.id === "related-documents") {
+      Alpine.initTree(document.getElementById("related-documents"));
+    }
+  });
 </script>
 
 {% endblock %}

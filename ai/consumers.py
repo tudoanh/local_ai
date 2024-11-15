@@ -114,6 +114,27 @@ class ChatConsumer(WebsocketConsumer):
                 chunk = f'<div class="message-content" hx-swap-oob="beforeend:#{contents_div_id}">{_format_token(chunk)}</div>'
                 self.send(text_data=chunk)
             system_message = "".join(chunks)
+        elif llm_type == 'gemma2b':
+            self.messages.append(
+                HumanMessage(content=f"""<start_of_turn>user
+{message_text}
+<end_of_turn>
+<start_of_turn>
+model
+"""
+            ))
+            llm = Llamafile(
+                base_url=settings.OPENAI_BASE_URL,
+                streaming=True,
+            )
+            chunks = []
+            for chunk in llm.stream(self.messages, stop=["<end_of_turn>"]):
+                chunks.append(chunk)
+                # use htmx to insert the next token at the end of our system message.
+                chunk = f'<div class="message-content" hx-swap-oob="beforeend:#{contents_div_id}">{_format_token(chunk)}</div>'
+                self.send(text_data=chunk)
+            system_message = "".join(chunks)
+
         elif llm_type == 'gemini':
             self.messages.append(
                 HumanMessage(content=message_text)
@@ -160,7 +181,8 @@ class ChatConsumer(WebsocketConsumer):
         # add to messages
         ai_msg = Message.objects.create(thread=thread, text=system_message, role=Message.Role.AI, previous_message=user_msg)
         # remove the msg before last msg in self.messages
-        self.messages.pop(-2)
+        if uploaded_files:
+            self.messages.pop(-2)
         self.messages.append(
             AIMessage(content=system_message)
         )
